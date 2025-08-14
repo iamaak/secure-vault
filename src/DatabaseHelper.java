@@ -1,5 +1,6 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -42,5 +43,22 @@ class DataBaseHelper {
         } catch (SQLException e) {
             System.out.println("Error creating tables: " + e.getMessage());
         }
+    }
+    public boolean addUser(String username, String hashedPassword, String salt) {
+        String insertUser = "INSERT INTO users(username, password_hash, salt) VALUES (?, ?, ?)";
+        boolean success;
+
+        try (PreparedStatement stmt = conn.prepareStatement(insertUser)) {
+            stmt.setString(1, username);
+            stmt.setString(2, hashedPassword);
+            stmt.setString(3, salt);
+            stmt.executeUpdate();
+            System.out.println("User added successfully!");
+            success = true;
+        } catch (SQLException e) {
+            System.out.println("Error inserting user: " + e.getMessage());
+            success = false;
+        }
+        return success;
     }
 }

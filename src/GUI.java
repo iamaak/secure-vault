@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 class GUI extends JFrame {
+    private DataBaseHelper db;
     private JPanel mainPanel, loginPanel, homePanel, registerPanel;
     private JLabel username, password, homeLabel;
     private JButton login, register, homeBackButton;
@@ -10,8 +11,14 @@ class GUI extends JFrame {
     private JPasswordField passwordField;
     private CardLayout cardLayout;
 
-    GUI() {
+    GUI(DataBaseHelper db) {
+        this.db = db;
         prepareGUI();
+    }
+    
+    public boolean registerUser(String username, String hashedPassword, String salt) {
+        boolean isRegistered = db.addUser(username, hashedPassword, salt);
+        return isRegistered;
     }
 
     private void prepareGUI() {
@@ -45,6 +52,74 @@ class GUI extends JFrame {
 
         // Register Panel
         registerPanel = new JPanel();
+        JLabel regUsername = new JLabel("Username : ");
+        registerPanel.add(regUsername);
+        JTextField  userField= new JTextField(10);
+        registerPanel.add(userField);
+        JLabel regPassword = new JLabel("Password : ");
+        registerPanel.add(regPassword);
+        JPasswordField  pwdField= new JPasswordField(10);
+        registerPanel.add(pwdField);
+        JLabel cfmPassword = new JLabel("Conform Password : ");
+        registerPanel.add(cfmPassword);
+        JPasswordField  cfmpwdField= new JPasswordField(10);
+        registerPanel.add(cfmpwdField);
+        JButton registerButton = new JButton("Register");
+        registerPanel.add(registerButton);
+
+        registerButton.addActionListener(e -> {
+            String username = userField.getText().trim();
+            char[] pwdChars = pwdField.getPassword();
+            char[] cfmpwdChars = cfmpwdField.getPassword();
+
+            // Username validation
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(registerPanel, "Username is empty!");
+                return;
+            }
+
+            // Password match check
+            if (!java.util.Arrays.equals(pwdChars, cfmpwdChars)) {
+                JOptionPane.showMessageDialog(registerPanel, "Passwords do not match!");
+                return;
+            }
+
+            String pwd = new String(pwdChars);
+
+            // Minimum length check
+            if (pwd.length() < 8) {
+                JOptionPane.showMessageDialog(registerPanel, "Password must be at least 8 characters.");
+                return;
+            }
+
+            // Complexity checks
+            if (!pwd.matches(".*[A-Z].*") ||
+                !pwd.matches(".*[a-z].*") ||
+                !pwd.matches(".*\\d.*") ||
+                //!pwd.matches(".*[!@#$%^&*(),.?\":{}|<>].*")
+                !pwd.matches(".*[^a-zA-Z0-9].*")) {
+                JOptionPane.showMessageDialog(registerPanel, 
+                    "Password must contain upper, lower, number, and special character.");
+                return;
+            }
+
+            // Generate salt
+            String salt = SecurityUtils.generateSalt();
+
+            // Hash password
+            String hashedPassword = SecurityUtils.hashPassword(pwd, salt);
+
+            // Store username, hashedPassword, and salt in DB
+            // TODO: Use DatabaseHelper to insert
+            registerUser(username, hashedPassword, salt);
+
+            // Clear password arrays from memory
+            java.util.Arrays.fill(pwdChars, '0');
+            java.util.Arrays.fill(cfmpwdChars, '0');
+
+            JOptionPane.showMessageDialog(registerPanel, "Registration successful!");
+        });
+
 
         // Add panels to mainPanel
         mainPanel.add(loginPanel, "Login");
