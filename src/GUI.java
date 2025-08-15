@@ -43,12 +43,36 @@ class GUI extends JFrame {
         loginPanel.add(register);
 
         // Home Panel
-        homePanel = new JPanel();
-        homeLabel = new JLabel();
+        homePanel = new JPanel(new BorderLayout(10, 10));
+
+        // Top: Welcome Label
+        homeLabel = new JLabel("", JLabel.CENTER);
+        homeLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        homePanel.add(homeLabel, BorderLayout.NORTH);
+
+        // Center: Table of saved credentials
+        String[] columnNames = {"Site Name", "Username", "Password"};
+        Object[][] data = {
+            {"example.com", "user123", "********"},
+            {"gmail.com", "myemail", "********"}
+        };
+        JTable passwordTable = new JTable(data, columnNames);
+        passwordTable.setFillsViewportHeight(true);
+        JScrollPane scrollPane = new JScrollPane(passwordTable);
+        homePanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Bottom: Button panel
+        JPanel bottomPanel = new JPanel();
+        JButton addPasswordButton = new JButton("Add New Password");
+        JButton logoutButton = new JButton("Logout");
         homeBackButton = new JButton("<-- Go Back");
 
-        homePanel.add(homeLabel);
-        homePanel.add(homeBackButton);
+        bottomPanel.add(addPasswordButton);
+        bottomPanel.add(homeBackButton);
+        bottomPanel.add(logoutButton);
+
+        homePanel.add(bottomPanel, BorderLayout.SOUTH);
+
 
         // Register Panel
         registerPanel = new JPanel();
