@@ -1,6 +1,7 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -61,4 +62,41 @@ class DataBaseHelper {
         }
         return success;
     }
+
+    /**
+     * Login result codes:
+     *  1 = success
+     *  2 = incorrect password
+     *  0 = user not found
+     * -1 = database error
+     */
+    public int login(String username, String password) {
+        String sql = "SELECT password_hash, salt FROM users WHERE username = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) { // Check if a row exists
+                String dbHash = rs.getString("password_hash");
+                String salt = rs.getString("salt");
+
+                String hashedPassword = SecurityUtils.hashPassword(password, salt);
+                if (hashedPassword.equals(dbHash)) {
+                    System.out.println("Login Successful!");
+                    return 1;
+                } else {
+                    System.out.println("Incorrect Password");
+                    return 2;
+                }
+            } else {
+                System.out.println("User does not exist");
+                return 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Database error during login: " + e.getMessage());
+            return -1;
+        }
+    }
+
 }

@@ -131,12 +131,19 @@ class GUI extends JFrame {
             String usernameInput = usernameField.getText();
             String passwordInput = new String(passwordField.getPassword());
 
-            if (usernameInput.equals("admin") && passwordInput.equals("123")) {
+
+            int result = db.login(usernameInput, passwordInput); 
+
+            if (result == 1) {
                 JOptionPane.showMessageDialog(loginPanel, "Welcome! " + usernameInput);
                 homeLabel.setText("Welcome to Home Screen! " + usernameInput);
                 cardLayout.show(mainPanel, "Home");
-            } else {
-                JOptionPane.showMessageDialog(loginPanel, "Invalid Credentials");
+            } else if (result == 2) {
+                JOptionPane.showMessageDialog(loginPanel, "Incorrect Password!");
+            } else if (result == 0) {
+                JOptionPane.showMessageDialog(loginPanel, "User Doesn't Exist!");
+            } else if (result == -1) {
+                JOptionPane.showMessageDialog(loginPanel, "Database Error! Please try again later.");
             }
         });
 
