@@ -8,6 +8,12 @@ import java.sql.Statement;
 class DataBaseHelper {
     private String url;
     private Connection conn;
+    protected int currentUserId;
+    public static final int LOGIN_SUCCESS = 1;
+    public static final int LOGIN_WRONG_PASSWORD = 2;
+    public static final int LOGIN_NO_USER = 0;
+    public static final int LOGIN_ERROR = -1;
+
 
     DataBaseHelper() {
         url = "jdbc:sqlite:data/securevault.db";
@@ -87,8 +93,8 @@ class DataBaseHelper {
      *  0 = user not found
      * -1 = database error
      */
-    public int login(String username, String password) {
-        String sql = "SELECT password_hash, salt FROM users WHERE username = ?";
+    public int login(String username, char[] passwordChars) {
+        String sql = "SELECT id, password_hash, salt FROM users WHERE username = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
@@ -98,22 +104,43 @@ class DataBaseHelper {
                 String dbHash = rs.getString("password_hash");
                 String salt = rs.getString("salt");
 
-                String hashedPassword = SecurityUtils.hashPassword(password, salt);
+                String hashedPassword = SecurityUtils.hashPassword(new String(passwordChars), salt);
+                java.util.Arrays.fill(passwordChars, '\0'); // wipe immediately
+
                 if (hashedPassword.equals(dbHash)) {
                     System.out.println("Login Successful!");
-                    return 1;
+                    currentUserId = rs.getInt("id");
+                    return LOGIN_SUCCESS;
                 } else {
                     System.out.println("Incorrect Password");
-                    return 2;
+                    return LOGIN_WRONG_PASSWORD;
                 }
             } else {
                 System.out.println("User does not exist");
-                return 0;
+                java.util.Arrays.fill(passwordChars, '\0'); // wipe even if user not found
+                return LOGIN_NO_USER;
             }
         } catch (SQLException e) {
             System.out.println("Database error during login: " + e.getMessage());
-            return -1;
+            return LOGIN_ERROR;
         }
     }
 
+    public boolean addPassword(int currentUserId, String siteName, String siteUsername, String sitePassword){
+        String sql = "INSERT INTO passwords(user_id, site_name, site_username, site_password) VALUES(?, ?, ?, ?)";
+
+        try(PreparedStatement stmt = conn.prepareStatement(sql)){
+            stmt.setInt(1, currentUserId );
+            stmt.setString(2, siteName);
+            stmt.setString(3, siteUsername);
+            stmt.setString(4, sitePassword);
+
+            stmt.executeUpdate();
+            return true;
+        }
+        catch (SQLException e) {
+            System.out.println("Error saving password : " + e.getMessage());
+            return false;
+        }
+    }
 }
