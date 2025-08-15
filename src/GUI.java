@@ -103,6 +103,11 @@ class GUI extends JFrame {
                 return;
             }
 
+            // username availability check 
+            if (!db.checkUsernameAvailability(username)){
+                JOptionPane.showMessageDialog(registerPanel, "Sorry! This username is already taken");
+                return;
+            }
             // Generate salt
             String salt = SecurityUtils.generateSalt();
 

@@ -45,6 +45,23 @@ class DataBaseHelper {
             System.out.println("Error creating tables: " + e.getMessage());
         }
     }
+
+    public boolean checkUsernameAvailability(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            // If a row is returned, username already exists
+            return !rs.next();
+
+        } catch (SQLException e) {
+            System.out.println("Error checking username: " + e.getMessage());
+            // In case of DB error, assume unavailable
+            return false;
+        }
+    }
     public boolean addUser(String username, String hashedPassword, String salt) {
         String insertUser = "INSERT INTO users(username, password_hash, salt) VALUES (?, ?, ?)";
         boolean success;
