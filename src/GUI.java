@@ -4,7 +4,7 @@ import java.awt.event.*;
 
 class GUI extends JFrame {
     private DataBaseHelper db;
-    private JPanel mainPanel, loginPanel, homePanel, registerPanel;
+    private JPanel mainPanel, loginPanel, homePanel, registerPanel, addNewPasswordPanel;
     private JLabel username, password, homeLabel;
     private JButton login, register, homeBackButton;
     private JTextField usernameField;
@@ -65,13 +65,106 @@ class GUI extends JFrame {
         JPanel bottomPanel = new JPanel();
         JButton addPasswordButton = new JButton("Add New Password");
         JButton logoutButton = new JButton("Logout");
-        homeBackButton = new JButton("<-- Go Back");
+        //homeBackButton = new JButton("<-- Go Back");
 
         bottomPanel.add(addPasswordButton);
-        bottomPanel.add(homeBackButton);
+        //bottomPanel.add(homeBackButton);
         bottomPanel.add(logoutButton);
 
         homePanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        addPasswordButton.addActionListener(e -> {
+            cardLayout.show(mainPanel, "addPassword");
+        });
+
+        logoutButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                homePanel,
+                "Are you sure you want to log out?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // 1. Clear current user session
+                db.currentUserId = -1;
+
+                // 2. Wipe password fields from memory (if available in scope)
+                char[] pwdChars = passwordField.getPassword();
+                java.util.Arrays.fill(pwdChars, '0');
+                passwordField.setText("");
+
+
+                // 3. Clear username field
+                usernameField.setText("");
+
+                // 4. Optionally clear any cached sensitive lists
+                // if (passwordList != null) passwordList.clear();
+
+                // 5. Navigate to login screen
+                cardLayout.show(mainPanel, "Login");
+            }
+        });
+
+
+        // Create Password Panel
+        JPanel addNewPasswordPanel = new JPanel();
+        addNewPasswordPanel.setLayout(new GridLayout(5, 2, 10, 10));
+
+        JLabel siteNameLabel = new JLabel("Site Name:");
+        JTextField siteNameField = new JTextField(15);
+
+        JLabel siteUsernameLabel = new JLabel("Site Username:");
+        JTextField siteUsernameField = new JTextField(15);
+
+        JLabel sitePasswordLabel = new JLabel("Site Password:");
+        JPasswordField sitePasswordField = new JPasswordField(15);
+
+        JButton savePasswordButton = new JButton("Save Password");
+        JButton backButton = new JButton(" Back");
+
+        // Add components to the panel
+        addNewPasswordPanel.add(siteNameLabel);
+        addNewPasswordPanel.add(siteNameField);
+        addNewPasswordPanel.add(siteUsernameLabel);
+        addNewPasswordPanel.add(siteUsernameField);
+        addNewPasswordPanel.add(sitePasswordLabel);
+        addNewPasswordPanel.add(sitePasswordField);
+        addNewPasswordPanel.add(savePasswordButton);
+        addNewPasswordPanel.add(backButton);
+
+        // Action to save password
+        savePasswordButton.addActionListener(e -> {
+            String siteName = siteNameField.getText().trim();
+            String siteUsername = siteUsernameField.getText().trim();
+            String sitePassword = new String(sitePasswordField.getPassword());
+
+            if (siteName.isEmpty() || siteUsername.isEmpty() || sitePassword.isEmpty()) {
+                JOptionPane.showMessageDialog(addNewPasswordPanel, "Please fill in all fields!");
+                return;
+            }
+
+            // Optional: Encrypt sitePassword here before saving
+            // String encryptedPassword = SecurityUtils.encrypt(sitePassword, userKey);
+
+            boolean success = db.addPassword(db.currentUserId, siteName, siteUsername, sitePassword);
+            if (success) {
+                JOptionPane.showMessageDialog(addNewPasswordPanel, "Password saved successfully!");
+                siteNameField.setText("");
+                siteUsernameField.setText("");
+                sitePasswordField.setText("");
+            } else {
+                JOptionPane.showMessageDialog(addNewPasswordPanel, "Error saving password!");
+            }
+        });
+
+
+
+        // Back button action
+        backButton.addActionListener(e -> cardLayout.show(mainPanel, "Home"));
+
+        // Add to CardLayout
+        mainPanel.add(addNewPasswordPanel, "addPassword");
 
 
         // Register Panel
@@ -139,12 +232,14 @@ class GUI extends JFrame {
             String hashedPassword = SecurityUtils.hashPassword(pwd, salt);
 
             // Store username, hashedPassword, and salt in DB
-            // TODO: Use DatabaseHelper to insert
             registerUser(username, hashedPassword, salt);
 
-            // Clear password arrays from memory
-            java.util.Arrays.fill(pwdChars, '0');
-            java.util.Arrays.fill(cfmpwdChars, '0');
+            // Wipe plaintext passwords from memory
+            java.util.Arrays.fill(pwdChars, '\0');
+            java.util.Arrays.fill(cfmpwdChars, '\0');
+            pwdChars = null;
+            cfmpwdChars = null;
+            
 
             JOptionPane.showMessageDialog(registerPanel, "Registration successful!");
         });
@@ -154,30 +249,31 @@ class GUI extends JFrame {
         mainPanel.add(loginPanel, "Login");
         mainPanel.add(homePanel, "Home");
         mainPanel.add(registerPanel, "registeration");
+        mainPanel.add(addNewPasswordPanel, "addPassword");
 
         // Login button action
         login.addActionListener(e -> {
             String usernameInput = usernameField.getText();
-            String passwordInput = new String(passwordField.getPassword());
+            char[] passwordInput = passwordField.getPassword();
 
 
             int result = db.login(usernameInput, passwordInput); 
 
-            if (result == 1) {
+            if (result == db.LOGIN_SUCCESS) {
                 JOptionPane.showMessageDialog(loginPanel, "Welcome! " + usernameInput);
                 homeLabel.setText("Welcome to Home Screen! " + usernameInput);
                 cardLayout.show(mainPanel, "Home");
-            } else if (result == 2) {
+            } else if (result == db.LOGIN_WRONG_PASSWORD) {
                 JOptionPane.showMessageDialog(loginPanel, "Incorrect Password!");
-            } else if (result == 0) {
+            } else if (result == db.LOGIN_NO_USER) {
                 JOptionPane.showMessageDialog(loginPanel, "User Doesn't Exist!");
-            } else if (result == -1) {
+            } else if (result == db.LOGIN_ERROR) {
                 JOptionPane.showMessageDialog(loginPanel, "Database Error! Please try again later.");
             }
         });
 
         // Back button action
-        homeBackButton.addActionListener(e -> cardLayout.show(mainPanel, "Login"));
+        //homeBackButton.addActionListener(e -> cardLayout.show(mainPanel, "Login"));
         register.addActionListener(e -> cardLayout.show(mainPanel, "registeration"));
 
         add(mainPanel);
