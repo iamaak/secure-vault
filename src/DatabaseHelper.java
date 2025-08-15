@@ -4,6 +4,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.swing.table.DefaultTableModel;
+import java.util.List;
+import java.util.ArrayList;
 
 class DataBaseHelper {
     private String url;
@@ -143,4 +146,51 @@ class DataBaseHelper {
             return false;
         }
     }
+
+    public List<Object[]> getPasswords() {
+        List<Object[]> passwordList = new ArrayList<>();
+        String sql = "SELECT site_name, site_username, site_password FROM passwords WHERE user_id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, currentUserId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] row = {
+                        rs.getString("site_name"),
+                        rs.getString("site_username"),
+                        rs.getString("site_password")
+                    };
+                    passwordList.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Couldn't retrieve passwords: " + e.getMessage());
+        }
+        return passwordList;
+    }
+
+    // turn that List<Object[]> from getPasswords() into a ready-to-use DefaultTableModel for JTable
+    public DefaultTableModel getPasswordsTableModel() {
+        String[] columnNames = { "Site Name", "Username", "Password" };
+        List<Object[]> passwordList = getPasswords();
+
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        for (Object[] row : passwordList) {
+            model.addRow(row);
+        }
+        return model;
+    }
+    public boolean deletePassword(int userId, String siteName, String siteUsername) {
+        String sql = "DELETE FROM passwords WHERE user_id = ? AND site_name = ? AND site_username = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setString(2, siteName);
+            stmt.setString(3, siteUsername);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Error deleting password: " + e.getMessage());
+            return false;
+        }
+    }
+
 }

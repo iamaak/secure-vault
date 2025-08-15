@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -10,6 +12,8 @@ class GUI extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private CardLayout cardLayout;
+    private JTable passwordTable; 
+
 
     GUI(DataBaseHelper db) {
         this.db = db;
@@ -51,13 +55,9 @@ class GUI extends JFrame {
         homePanel.add(homeLabel, BorderLayout.NORTH);
 
         // Center: Table of saved credentials
-        String[] columnNames = {"Site Name", "Username", "Password"};
-        Object[][] data = {
-            {"example.com", "user123", "********"},
-            {"gmail.com", "myemail", "********"}
-        };
-        JTable passwordTable = new JTable(data, columnNames);
-        passwordTable.setFillsViewportHeight(true);
+        passwordTable = new JTable(new DefaultTableModel(
+            new String[]{"Site Name", "Username", "Password"}, 0
+        ));
         JScrollPane scrollPane = new JScrollPane(passwordTable);
         homePanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -65,10 +65,40 @@ class GUI extends JFrame {
         JPanel bottomPanel = new JPanel();
         JButton addPasswordButton = new JButton("Add New Password");
         JButton logoutButton = new JButton("Logout");
-        //homeBackButton = new JButton("<-- Go Back");
+        JButton deletePasswordButton = new JButton("Delete Selected");
 
+        deletePasswordButton.addActionListener(e -> {
+            int selectedRow = passwordTable.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(homePanel, "Please select a row to delete!");
+                return;
+            }
+
+            // Get values from table
+            String siteName = passwordTable.getValueAt(selectedRow, 0).toString();
+            String siteUsername = passwordTable.getValueAt(selectedRow, 1).toString();
+
+            int confirm = JOptionPane.showConfirmDialog(
+                homePanel,
+                "Are you sure you want to delete this password?",
+                "Confirm Deletion",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean success = db.deletePassword(db.currentUserId, siteName, siteUsername);
+                if (success) {
+                    JOptionPane.showMessageDialog(homePanel, "Password deleted successfully!");
+                    passwordTable.setModel(db.getPasswordsTableModel()); // Refresh table
+                } else {
+                    JOptionPane.showMessageDialog(homePanel, "Error deleting password!");
+                }
+            }
+        });
+
+        
+        bottomPanel.add(deletePasswordButton);
         bottomPanel.add(addPasswordButton);
-        //bottomPanel.add(homeBackButton);
         bottomPanel.add(logoutButton);
 
         homePanel.add(bottomPanel, BorderLayout.SOUTH);
@@ -153,6 +183,9 @@ class GUI extends JFrame {
                 siteNameField.setText("");
                 siteUsernameField.setText("");
                 sitePasswordField.setText("");
+
+                // Refresh table after adding password
+                passwordTable.setModel(db.getPasswordsTableModel());
             } else {
                 JOptionPane.showMessageDialog(addNewPasswordPanel, "Error saving password!");
             }
@@ -262,8 +295,13 @@ class GUI extends JFrame {
             if (result == db.LOGIN_SUCCESS) {
                 JOptionPane.showMessageDialog(loginPanel, "Welcome! " + usernameInput);
                 homeLabel.setText("Welcome to Home Screen! " + usernameInput);
+
+                // Update table with user's passwords
+                passwordTable.setModel(db.getPasswordsTableModel());
+
                 cardLayout.show(mainPanel, "Home");
-            } else if (result == db.LOGIN_WRONG_PASSWORD) {
+            }
+            else if (result == db.LOGIN_WRONG_PASSWORD) {
                 JOptionPane.showMessageDialog(loginPanel, "Incorrect Password!");
             } else if (result == db.LOGIN_NO_USER) {
                 JOptionPane.showMessageDialog(loginPanel, "User Doesn't Exist!");
