@@ -215,6 +215,12 @@ class GUI extends JFrame {
         registerPanel.add(cfmpwdField);
         JButton registerButton = new JButton("Register");
         registerPanel.add(registerButton);
+        JButton regBackButton = new JButton("Go To Login");
+        registerPanel.add(regBackButton);
+
+        regBackButton.addActionListener(e->{
+            cardLayout.show(mainPanel, "Login");
+        });
 
         registerButton.addActionListener(e -> {
             String username = userField.getText().trim();
@@ -327,10 +333,10 @@ class GUI extends JFrame {
 
         setIconImage(icon.getImage());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(700, 500);
         setTitle("SecureVault");
         setLocationRelativeTo(null);
-        setResizable(false);
+        //setResizable(false);
         //setVisible(true);
     }
 }
