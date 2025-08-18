@@ -1,6 +1,8 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
+//import SecurityUtils.EncryptedData;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -175,7 +177,9 @@ class GUI extends JFrame {
             }
 
             // Optional: Encrypt sitePassword here before saving
-            boolean success = db.addPassword(db.currentUserId, siteName, siteUsername, sitePassword);
+            SecurityUtils.EncryptedData encryptedPassword = SecurityUtils.encrypt(sitePassword, SecurityUtils.secretKey);
+
+            boolean success = db.addPassword(db.currentUserId, siteName, siteUsername, encryptedPassword);
             if (success) {
                 JOptionPane.showMessageDialog(addNewPasswordPanel, "Password saved successfully!");
                 siteNameField.setText("");
@@ -273,7 +277,6 @@ class GUI extends JFrame {
             
 
             JOptionPane.showMessageDialog(registerPanel, "Registration successful!");
-            cardLayout.show(mainPanel, "Login");
         });
 
 
