@@ -1,6 +1,7 @@
 # SecureVault
 A secure Java-based password manager that stores credentials in an SQLite database with AES encryption. Built for security and simplicity. Initially developed as a command-line tool, with plans to upgrade to a Swing-based GUI.
 
+D:\programmer\java\password_manager\v1.0\src
 
 Author
 Aamir A. Khan
