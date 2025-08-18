@@ -1,8 +1,8 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 
 class GUI extends JFrame {
     private DataBaseHelper db;
@@ -17,6 +17,7 @@ class GUI extends JFrame {
 
     GUI(DataBaseHelper db) {
         this.db = db;
+        
         prepareGUI();
     }
     
@@ -75,8 +76,8 @@ class GUI extends JFrame {
             }
 
             // Get values from table
-            String siteName = passwordTable.getValueAt(selectedRow, 0).toString();
-            String siteUsername = passwordTable.getValueAt(selectedRow, 1).toString();
+            String siteName = passwordTable.getValueAt(selectedRow, 1).toString();
+            String siteUsername = passwordTable.getValueAt(selectedRow, 2).toString();
 
             int confirm = JOptionPane.showConfirmDialog(
                 homePanel,
@@ -317,11 +318,19 @@ class GUI extends JFrame {
 
         add(mainPanel);
 
+        URL iconURL = getClass().getResource("/resources/secureVault.png");
+        if (iconURL == null) {
+            System.err.println("Image not found!");
+        }
+
+        ImageIcon icon = new ImageIcon(iconURL);
+
+        setIconImage(icon.getImage());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 300);
         setTitle("SecureVault");
         setLocationRelativeTo(null);
         setResizable(false);
-        setVisible(true);
+        //setVisible(true);
     }
 }

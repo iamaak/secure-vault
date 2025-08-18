@@ -188,7 +188,7 @@ class DataBaseHelper {
     }
 
     public boolean deletePassword(int userId, String siteName, String siteUsername) {
-        String sql = "DELETE FROM passwords WHERE user_id=? AND site_name=? AND site_username=?";
+        String sql = "DELETE FROM passwords WHERE user_id=? AND service=? AND username=?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             stmt.setString(2, siteName);
